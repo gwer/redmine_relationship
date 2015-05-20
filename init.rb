@@ -1,5 +1,7 @@
 require 'redmine'
 
+require_dependency 'interaction/hooks'
+
 Redmine::Plugin.register :redmine_interaction do
   name 'Redmine Interaction plugin'
   author 'gwer'

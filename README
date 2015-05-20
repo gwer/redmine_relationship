@@ -1,0 +1,3 @@
+Если скрипты и стили не подтягиваются:
+# mkdir public/plugin_assets
+# ln -s ../../vendor/plugins/redmine_interaction/assets/ public/plugin_assets/redmine_interaction

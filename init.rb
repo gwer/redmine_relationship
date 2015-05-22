@@ -1,9 +1,9 @@
 require 'redmine'
 
-require_dependency 'interaction/hooks'
+require_dependency 'relationship/hooks'
 
-Redmine::Plugin.register :redmine_interaction do
-  name 'Redmine Interaction plugin'
+Redmine::Plugin.register :redmine_relationship do
+  name 'Redmine Relationship plugin'
   author 'gwer'
   description 'This is a plugin for Redmine'
   version '0.0.1'

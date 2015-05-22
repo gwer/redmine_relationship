@@ -1,6 +1,10 @@
-#match 'interaction/(:action(/:id))', :controller => 'interaction'
-#get "interaction", :to => "interaction#index"
 ActionController::Routing::Routes.draw do |map|
-	map.connect('interaction',  :controller => 'interaction', :action => 'index',
+	map.connect('relationship',  :controller => 'relationship', :action => 'index',
+		:conditions => {:method => :get})
+	map.connect('relationship/projects',  :controller => 'relationship', :action => 'projects',
+		:conditions => {:method => :get})
+	map.connect('relationship/projects/:id/children',  :controller => 'relationship', :action => 'projects_children',
+		:conditions => {:method => :get})
+	map.connect('relationship/issues/:id/children',  :controller => 'relationship', :action => 'issues_children',
 		:conditions => {:method => :get})
 end

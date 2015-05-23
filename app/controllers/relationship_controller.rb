@@ -7,7 +7,7 @@ class RelationshipController < ApplicationController
 
   def projects
   	@projects = Project.all
-  	render json: @projects
+  	render json: @projects.reduce({}) {|a,v| a.merge({(v.parent_id!=nil) ? v.parent_id : 'null' => [v]}){|_, old, new| old+new}}
   end
 
   def projects_children

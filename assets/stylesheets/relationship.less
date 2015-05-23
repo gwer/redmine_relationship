@@ -1,0 +1,34 @@
+@control_height: 25px;
+@tree_height: 550px;
+
+.border {
+	border: 1px solid #999;
+}
+
+.issues_control {
+	.column {
+		width: 49%;
+		
+		&.left {
+			float: left;
+		}
+
+		&.right {
+			float: right;
+		}
+
+		.control {
+			width: 100%;
+			height: @control_height;
+			margin-bottom: 10px;
+			.border;
+		}
+
+		.tree {
+			width: 100%;
+			height: @tree_height;
+			overflow: auto;
+			.border;
+		}
+	}
+}

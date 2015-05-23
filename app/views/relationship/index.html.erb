@@ -1,1 +1,18 @@
-<h2>Управление тикетами</h2>
+<% content_for :header_tags do %>
+	<%= stylesheet_link_tag "relationship.less", rel: 'stylesheet/less', plugin: "redmine_relationship" %>
+	<%= javascript_include_tag "less.min.js", plugin: "redmine_relationship" %>
+	<%= javascript_include_tag "jquery.min.js", plugin: "redmine_relationship" %>
+	<%= javascript_include_tag "relationship.js", plugin: "redmine_relationship" %>
+<% end %>
+<h2><%= l('issues_control') %></h2>
+
+<div class="issues_control">
+	<div class="column left">
+		<div class="control"></div>
+		<div class="tree"></div>
+	</div>
+	<div class="column right">
+		<div class="control"></div>
+		<div class="tree"></div>
+	</div>
+</div>

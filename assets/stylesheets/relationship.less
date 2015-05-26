@@ -29,6 +29,35 @@
 			height: @tree_height;
 			overflow: auto;
 			.border;
+
+			ul {
+				padding-left: 20px;
+				list-style-type: none;
+
+				li {
+					margin: 5px 0;
+
+					.switcher {
+						@size: 9px;
+						display: inline-block;
+						width: @size;
+						height: @size;
+						margin-right: 10px;
+						background: url('/plugin_assets/redmine_relationship/images/switcher.png') no-repeat;
+
+						&.open {
+							background-position: -9px 0;
+						}
+						&.hidden {
+							background: none;
+						}
+					}
+				}
+			}
+
+			& > ul {
+				padding-left: 30px;
+			}
 		}
 	}
 }

@@ -22,7 +22,7 @@ class RelationshipController < ApplicationController
             project: project,
             has_content: project_has_content(project.id)
           }],
-          issues_loaded: false
+          loaded: false
         }
       end
     end

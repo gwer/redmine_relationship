@@ -44,12 +44,25 @@
 						height: @size;
 						margin-right: 10px;
 						background: url('/plugin_assets/redmine_relationship/images/switcher.png') no-repeat;
+						cursor: pointer;
 
 						&.open {
 							background-position: -9px 0;
 						}
 						&.hidden {
 							background: none;
+							cursor: default;
+						}
+						&.loading:after {
+							content: '';
+							display: block;
+							position: relative;
+							top: -4px;
+							left: -4px;
+							width: 16px;
+							height: 16px;
+							background: url('/images/loading.gif') no-repeat;
+							cursor: default;
 						}
 					}
 				}

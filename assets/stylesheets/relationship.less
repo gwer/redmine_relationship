@@ -1,5 +1,7 @@
 @control_height: 25px;
 @tree_height: 550px;
+@projects_color: #ace;
+@issues_color: #aec;
 
 .border {
 	border: 1px solid #999;
@@ -33,6 +35,16 @@
 			ul {
 				padding-left: 20px;
 				list-style-type: none;
+
+				&.projects {
+					font-weight: bold;
+					border-left: 3px solid @projects_color;
+				}
+
+				&.issues {
+					font-weight: normal;
+					border-left: 3px solid @issues_color;
+				}
 
 				li {
 					margin: 5px 0;
@@ -69,7 +81,6 @@
 			}
 
 			& > ul {
-				padding-left: 30px;
 			}
 		}
 	}

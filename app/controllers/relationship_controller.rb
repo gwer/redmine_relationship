@@ -22,6 +22,7 @@ class RelationshipController < ApplicationController
             project: project,
             has_content: project_has_content(project.id)
           }],
+          issues: [],
           loaded: false
         }
       end
@@ -41,7 +42,12 @@ class RelationshipController < ApplicationController
 
   def issues_children
   	@issues = Issue.all(conditions: {parent_id: params[:id]})
-  	render json: @issues
+    result = @issues.map do | issue | {
+        issue: issue,
+        has_content: issue_has_content(issue.id)
+      }
+    end
+    render json: result
   end
 
 private

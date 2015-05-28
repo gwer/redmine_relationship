@@ -1,5 +1,6 @@
 <% content_for :header_tags do %>
 	<%= stylesheet_link_tag "relationship.less", rel: 'stylesheet/less', plugin: "redmine_relationship" %>
+	<%= stylesheet_link_tag "font-awesome-4.3.0/css/font-awesome.min.css", plugin: "redmine_relationship" %>
 	<%= javascript_include_tag "less.min.js", plugin: "redmine_relationship" %>
 	<%= javascript_include_tag "jquery.min.js", plugin: "redmine_relationship" %>
 	<%= javascript_include_tag "relationship.js", plugin: "redmine_relationship" %>
@@ -7,12 +8,48 @@
 <h2><%= l('issues_control') %></h2>
 
 <div class="issues_control">
-	<div class="column left">
-		<div class="control"></div>
+	<div class="column left" data-side="left">
+		<div class="control">
+			<div class="control-button disabled" data-type="open">
+				<i class="fa fa-external-link"></i>
+				<div class="description">Открыть</div>
+			</div>
+			<div class="control-button disabled" data-type="related">
+				<i class="fa fa-link"></i>
+				<div class="description">Показать связанные</div>
+			</div>
+			<div class="control-button disabled" data-type="parent_project">
+				<i class="fa fa-sitemap"></i>
+				<div class="description">Изменить родительский проект</div>
+			</div>
+			<div class="control-button disabled" data-type="parent_issue">
+				<i class="fa fa-code-fork fa-rotate-180 fa-flip-horizontal"></i>
+				<div class="description">Изменить родительскую задачу</div>
+			</div>
+		</div>
 		<div class="tree"></div>
+		<div class="related_issues"></div>
 	</div>
-	<div class="column right">
-		<div class="control"></div>
+	<div class="column right" data-side="right">
+		<div class="control">
+			<div class="control-button disabled" data-type="open">
+				<i class="fa fa-external-link"></i>
+				<div class="description">Открыть</div>
+			</div>
+			<div class="control-button disabled" data-type="related">
+				<i class="fa fa-link"></i>
+				<div class="description">Показать связанные</div>
+			</div>
+			<div class="control-button disabled" data-type="parent_project">
+				<i class="fa fa-sitemap"></i>
+				<div class="description">Изменить родительский проект</div>
+			</div>
+			<div class="control-button disabled" data-type="parent_issue">
+				<i class="fa fa-code-fork fa-rotate-180 fa-flip-horizontal"></i>
+				<div class="description">Изменить родительскую задачу</div>
+			</div>
+		</div>
 		<div class="tree"></div>
+		<div class="related_issues"></div>
 	</div>
 </div>

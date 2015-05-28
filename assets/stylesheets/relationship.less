@@ -1,7 +1,9 @@
-@control_height: 25px;
-@tree_height: 550px;
-@projects_color: #ace;
-@issues_color: #aec;
+@control_height: 	25px;
+@tree_height: 		550px;
+@projects_color: 	#ace;
+@issues_color: 		#aec;
+@selected_color:	#def;
+@bg_color: 			#fff;
 
 .border {
 	border: 1px solid #999;
@@ -24,6 +26,45 @@
 			height: @control_height;
 			margin-bottom: 10px;
 			.border;
+
+			.control-button {
+				position: relative;
+				display: inline-block;
+				width: 16px;
+				height: 16px;
+				margin: 5px;
+
+				.fa {					
+					font-size: 1.3em;
+				}
+
+				&.disabled {
+					.fa {
+						opacity: 0.5;
+					}
+				}
+				
+				&:not(.disabled) {	
+					cursor: pointer;
+
+					&:hover {
+						.description {
+							display: block;
+						}
+					}
+				}
+
+				.description {
+					display: none;
+					position: absolute;
+					top: 10px;
+					left: 10px;
+					padding: 3px;
+					z-index: 2;
+					background: @bg_color;
+					.border;
+				}
+			}
 		}
 
 		.tree {
@@ -47,7 +88,14 @@
 				}
 
 				li {
-					margin: 5px 0;
+					padding: 3px 0;
+					cursor: pointer;
+
+					&:hover {
+						.title {
+							padding-left: 1px;
+						}
+					}
 
 					.switcher {
 						@size: 9px;
@@ -57,14 +105,13 @@
 						margin-right: 10px;
 						background: url('/plugin_assets/redmine_relationship/images/switcher.png') no-repeat;
 						cursor: pointer;
+						opacity: 0.6;
 
-						&.open {
-							background-position: -9px 0;
-						}
 						&.hidden {
 							background: none;
 							cursor: default;
 						}
+
 						&.loading:after {
 							content: '';
 							display: block;
@@ -76,11 +123,42 @@
 							background: url('/images/loading.gif') no-repeat;
 							cursor: default;
 						}
+
+						&:hover {
+							//margin-left: -1px;
+							opacity: 1;
+						}
+					}
+
+					.title {
+						display: inline-block;
+					}
+
+					&.selected {
+						background: @selected_color;
+
+						ul {
+							background: @bg_color;
+						}
+					}
+
+					&.open {
+						padding: 0;
+						
+						& > .switcher {
+							background-position: -9px 0;
+						}
+
+						& > .title {
+							padding: 3px 0;
+						}
+					}
+
+					.separator {
+						background: @bg_color;
+						height: 3px;
 					}
 				}
-			}
-
-			& > ul {
 			}
 		}
 	}

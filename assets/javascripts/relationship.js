@@ -81,13 +81,12 @@ jQuery(function($){
 
 		branch.css('display', 'none')
 		params[parent_type].objects[id][node_type_plural].each(function(el) {
-			object = el[node_type]
 			switcher = _switcher.clone()
-			leaf = $('<li><div class="title">' + object[name] + '<div></li>')
-				.data('id', object.id)
+			leaf = $('<li><div class="title">' + el[name] + '<div></li>')
+				.data('id', el.id)
 				.data('type', node_type)
 				.prepend(switcher)
-			if (!el.has_content) {
+			if (!parseInt(el.has_content)) {
 				switcher.addClass('hidden')
 			} 
 			switcher.click(switch_handler)

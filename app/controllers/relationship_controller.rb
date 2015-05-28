@@ -6,22 +6,22 @@ class RelationshipController < ApplicationController
   end
 
   def projects
-  	@projects = Project.all(conditions: {status: 1})
+  	@projects = Project.all(conditions: {status: 1}, 
+                            select: 'projects.id, projects.name, 
+                                     projects.parent_id,
+                                     (projects.rgt - projects.lft - 1 + 
+                                      COUNT(issues.id)) AS has_content',
+                            joins: 'LEFT JOIN "issues" ON issues.project_id = projects.id', 
+                            group: 'projects.id',
+                            order: 'projects.id')
     result = {}
-  	#render json: @projects.reduce({}) {|a,v| a.merge({(v.parent_id!=nil) ? v.parent_id : 'null' => [v]}){|_, old, new| old+new}}
     @projects.each do | project |
       key = (project.parent_id!=nil) ? project.parent_id : 'null'
       if result.has_key?(key)
-        result[key][:projects] << {
-          project: project,
-          has_content: project_has_content(project.id)
-        }
+        result[key][:projects] << project
       else
         result[key] = {
-          projects: [{
-            project: project,
-            has_content: project_has_content(project.id)
-          }],
+          projects: [project],
           issues: [],
           loaded: false
         }
@@ -31,31 +31,33 @@ class RelationshipController < ApplicationController
   end
 
   def projects_children
-  	@issues = Issue.all(conditions: {project_id: params[:id]})
-  	result = @issues.map do | issue | {
-        issue: issue,
-        has_content: issue_has_content(issue.id)
-      }
-    end
-    render json: result
+  	@issues = Issue.all(conditions: {project_id: params[:id]},
+                        select: 'issues.id, parent_id, project_id, subject, 
+                                 status_id, users.firstname AS firstname, 
+                                 users.lastname AS lastname, 
+                                 issue_statuses.name AS status_name,
+                                 (rgt-lft-1) as has_content', 
+                        joins: [:author, :status])
+    render json: @issues
   end
 
   def issues_children
-  	@issues = Issue.all(conditions: {parent_id: params[:id]})
-    result = @issues.map do | issue | {
-        issue: issue,
-        has_content: issue_has_content(issue.id)
-      }
-    end
-    render json: result
+  	@issues = Issue.all(conditions: {parent_id: params[:id]},
+                        select: 'issues.id, parent_id, project_id, subject, 
+                                 status_id, users.firstname AS firstname, 
+                                 users.lastname AS lastname, 
+                                 issue_statuses.name AS status_name,
+                                 (rgt-lft-1) as has_content', 
+                        joins: [:author, :status])
+    render json: @issues
   end
 
 private
-  def project_has_content(id)
-    has_content = Project.all(conditions: {parent_id: id}).count > 0
-    has_content ||= Issue.all(conditions: {project_id: id}).count > 0
+
+  def get_relative_issues(issue)
+    issues = issue.relations.map do | relation |
+
+    end
   end
-  def issue_has_content(id)
-    Issue.all(conditions: {parent_id: id}).count > 0
-  end
+
 end

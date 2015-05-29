@@ -37,7 +37,7 @@ class RelationshipController < ApplicationController
                                  users.lastname AS lastname, 
                                  issue_statuses.name AS status_name,
                                  (rgt-lft-1) as has_content', 
-                        joins: [:author, :status])
+                        joins: [:assigned_to, :status])
     render json: @issues
   end
 
@@ -48,7 +48,7 @@ class RelationshipController < ApplicationController
                                  users.lastname AS lastname, 
                                  issue_statuses.name AS status_name,
                                  (rgt-lft-1) as has_content', 
-                        joins: [:author, :status])
+                        joins: [:assigned_to, :status])
     render json: @issues
   end
 

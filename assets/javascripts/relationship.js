@@ -77,15 +77,24 @@ jQuery(function($){
 			node_type_plural = params[node_type].plural,
 			branch = $('<ul class="' + node_type_plural + '">'),
 			_switcher = $('<div class="switcher">'),
-			object, switcher, leaf
+			object, switcher, leaf, assigned_to, status
 
 		branch.css('display', 'none')
 		params[parent_type].objects[id][node_type_plural].each(function(el) {
 			switcher = _switcher.clone()
-			leaf = $('<li><div class="title">' + el[name] + '<div></li>')
+			leaf = $('<li><div class="title">' + el[name] + '</div></li>')
 				.data('id', el.id)
 				.data('type', node_type)
 				.prepend(switcher)
+			if (node_type === 'issue') {
+				assigned_to = el.firstname + ' ' + el.lastname
+				status = el.status_name
+				leaf.append('<td class="assigned">' + assigned_to + '</td>')
+					.append('<td class="status">' + status + '</td>')
+			}
+			leaf.find('.title').wrapAll('<td>')				
+			leaf.find('td').wrapAll('<table class="wrapper">')
+						   .wrapAll('<tr>')
 			if (!parseInt(el.has_content)) {
 				switcher.addClass('hidden')
 			} 

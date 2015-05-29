@@ -88,16 +88,28 @@
 				}
 
 				li {
+					position: relative;
 					padding: 3px 0;
 					cursor: pointer;
 
 					&:hover {
-						& > .title {
-							padding-left: 1px;
+						& > .wrapper > tr > td > .title {
+							padding-left: 21px;
 						}
 					}
 
+					ul {
+						&:first-of-type {
+							margin-top: 3px;
+						}
+					}
+
+					.title {
+						padding-left: 20px;
+					}
+
 					.switcher {
+						position: absolute;
 						@size: 9px;
 						display: inline-block;
 						width: @size;
@@ -106,6 +118,7 @@
 						background: url('/plugin_assets/redmine_relationship/images/switcher.png') no-repeat;
 						cursor: pointer;
 						opacity: 0.6;
+						top: 5px;
 
 						&.hidden {
 							background: none;
@@ -125,13 +138,25 @@
 						}
 
 						&:hover {
-							//margin-left: -1px;
 							opacity: 1;
 						}
 					}
 
-					.title {
-						display: inline-block;
+					.wrapper {
+						border-spacing: 0;
+						padding: 0;
+						width: 100%;
+					
+						tr, td {
+							padding: 0;
+						}
+
+						.assigned, .status {
+							width: 100px;
+							margin-left: 15px;
+							font-size: 0.8em;
+							color: #999;
+						}
 					}
 
 					&.selected {
@@ -143,14 +168,14 @@
 					}
 
 					&.open {
-						padding: 0;
+						padding-bottom: 0;
 						
 						& > .switcher {
 							background-position: -9px 0;
 						}
 
-						& > .title {
-							padding: 3px auto;
+						& > .wrapper {
+							//padding: 3px auto;
 						}
 					}
 

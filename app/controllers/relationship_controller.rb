@@ -69,7 +69,7 @@ private
     return {
       select: 'issues.id, issues.parent_id, project_id, subject, status_id, 
                users.firstname AS firstname, users.lastname AS lastname, 
-               issue_statuses.name AS status_name, 
+               issue_statuses.name AS status_name, issue_statuses.is_closed, 
                (issues.rgt-issues.lft-1) as has_content', 
       joins: [:assigned_to, :status, :project]
     }

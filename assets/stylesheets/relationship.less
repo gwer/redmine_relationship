@@ -10,6 +10,46 @@
 }
 
 .issues_control {
+
+	.general-control-button {
+		position: relative;
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		margin: 5px;
+
+		.fa {					
+			font-size: 1.3em;
+		}
+
+		&.disabled {
+			.fa {
+				opacity: 0.5;
+			}
+		}
+		
+		&:not(.disabled) {	
+			cursor: pointer;
+
+			&:hover {
+				.description {
+					display: block;
+				}
+			}
+		}
+
+		.description {
+			display: none;
+			position: absolute;
+			top: 10px;
+			left: 10px;
+			padding: 3px;
+			z-index: 2;
+			background: @bg_color;
+			.border;
+		}
+	}
+
 	.column {
 		width: 49%;
 		
@@ -28,42 +68,7 @@
 			.border;
 
 			.control-button {
-				position: relative;
-				display: inline-block;
-				width: 16px;
-				height: 16px;
-				margin: 5px;
-
-				.fa {					
-					font-size: 1.3em;
-				}
-
-				&.disabled {
-					.fa {
-						opacity: 0.5;
-					}
-				}
-				
-				&:not(.disabled) {	
-					cursor: pointer;
-
-					&:hover {
-						.description {
-							display: block;
-						}
-					}
-				}
-
-				.description {
-					display: none;
-					position: absolute;
-					top: 10px;
-					left: 10px;
-					padding: 3px;
-					z-index: 2;
-					background: @bg_color;
-					.border;
-				}
+				.general-control-button
 			}
 		}
 
@@ -93,7 +98,7 @@
 					cursor: pointer;
 
 					&:hover {
-						& > .wrapper > tr > td > .title {
+						& > .wrapper > tbody > tr > .title {
 							padding-left: 21px;
 						}
 					}
@@ -102,10 +107,6 @@
 						&:first-of-type {
 							margin-top: 3px;
 						}
-					}
-
-					.title {
-						padding-left: 20px;
 					}
 
 					.switcher {
@@ -149,6 +150,11 @@
 					
 						tr, td {
 							padding: 0;
+						}
+
+						.title {
+							padding-left: 20px;
+							vertical-align: top;
 						}
 
 						.assigned, .status {

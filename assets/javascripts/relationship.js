@@ -22,25 +22,43 @@ jQuery(function($){
 			}
 		},
 		control_buttons = {
-			initial: ['related_by_number'],
-			project: ['open', 'related_by_number'],
-			issue: ['open', 'related', 'parent_project', 'parent_issue', 
-					'related_by_number'],
-			related_issues: ['return', 'related_by_number'],
-			related_issues_selected: ['open', 'related', 'parent_project', 
-									  'parent_issue', 'return', 'deselect',
-									  'related_by_number'],
-			all: ['open', 'related', 'parent_project', 'parent_issue', 'return',
-				  'deselect', 'related_by_number']
+			initial: {
+				self: [],
+				general: ['related_by_number', 'show_closed'],
+				other: false,
+			},
+			project: {
+				self: ['open'],
+				general: ['related_by_number', 'show_closed'],
+				other: false,
+			},
+			issue: {
+				self: ['open', 'related', 'parent_project', 'parent_issue'],
+				general: ['related_by_number', 'show_closed'],
+				other: false,
+			},
+			related_issues: {
+				self: [],
+				general: ['related_by_number', 'show_closed', 'return'],
+				other: [],
+			},
+			related_issues_selected: {
+				self: ['open', 'related', 'parent_project', 'parent_issue'],
+				general: ['related_by_number', 'show_closed', 'return', 
+						  'deselect'],
+				other: [],
+			},
+			all: {
+				self: ['open', 'related', 'parent_project', 'parent_issue'],
+				general: ['related_by_number', 'show_closed', 'return', 
+						  'deselect'],
+				other: ['open', 'related', 'parent_project', 'parent_issue']
+			},
 		},
-		control_buttons_handlers = {
-			open: control_button_handler_open,
-			related: control_button_handler_related,
-			parent_project: control_button_handler_parent_project,
-			parent_issue: control_button_handler_parent_issue,
-			return: control_button_handler_return,
-			deselect: control_button_handler_deselect,
-			related_by_number: control_button_handler_related_by_number,
+		control_buttons_handlers = {},
+		general_control_buttons_handlers = {},
+		state = {
+			closed: 'unlock',
 		}
 
 	function init_params(objects, name, plural) {
@@ -50,6 +68,21 @@ jQuery(function($){
 			plural: plural,
 		}
 	}
+
+	(function init() {
+		$.get('/relationship/projects', function(data){
+			load_object(data, projects)
+			load_and_draw_branch('project', null, $('.column .tree'))
+			control_buttons_enable_only('column', 'initial')
+		})
+
+		$('.column')
+			.on('click', 'li', select_handler)
+			.on('dblclick', 'li', li_dblclick_handler)
+
+		$('.control-button').click(control_buttons_handler)
+		$('.general-control-button').click(general_control_buttons_handler)
+	})()
 
 
 	/*
@@ -132,12 +165,6 @@ jQuery(function($){
 		return false
 	}
 
-	$.get('/relationship/projects', function(data){
-		load_object(data, projects)
-		load_and_draw_branch('project', null, $('.column .tree'))
-		control_buttons_enable_only('column', control_buttons.initial)
-	})
-
 
 	/*
 	 *	Selection processing
@@ -163,12 +190,12 @@ jQuery(function($){
 					$(this).slideDown()
 				}
 			})
-			control_buttons_enable_only(side, 
-								   control_buttons.related_issues_selected)
 			control_buttons_enable_only(other_side(side), 
-								   control_buttons.related_issues)
+								'related_issues')
+			control_buttons_enable_only(side, 
+								'related_issues_selected')
 		} else {			
-			control_buttons_enable_only(side, control_buttons[li.data('type')])
+			control_buttons_enable_only(side, li.data('type'))
 		}
 		return false
 	}
@@ -177,10 +204,6 @@ jQuery(function($){
 		open_url($(this).data('type'), $(this).data('id'))
 		return false
 	}
-
-	$('.column')
-		.on('click', 'li', select_handler)
-		.on('dblclick', 'li', li_dblclick_handler)
 
 
 	/*
@@ -197,8 +220,7 @@ jQuery(function($){
 
 		left.find('ul').remove()
 		right.find('ul').remove()
-		control_buttons_enable_only('left', control_buttons.related_issues) 
-		control_buttons_enable_only('right', control_buttons.related_issues) 
+		control_buttons_enable_only('column', 'related_issues') 
 		$('.tree').slideUp()
 		$('.related_issues').slideDown()
 		$('#ajax-indicator').show()
@@ -240,41 +262,49 @@ jQuery(function($){
 		control_buttons_handlers[$(this).data('type')](column)
 	}
 
-	function control_button_handler_open(column) {
+	function general_control_buttons_handler() {
+		if ($(this).hasClass('disabled')) return
+
+		general_control_buttons_handlers[$(this).data('type')]()
+	}
+
+	control_buttons_handlers.open = function(column) {
 		open_url(selected[column].type, selected[column].id)
 	}
 
-	function control_button_handler_related(column) {
+	control_buttons_handlers.related = function(column) {
 		load_and_draw_related_issues(selected[column].id)
 	}
 
-	function control_button_handler_parent_project(column) {
+	control_buttons_handlers.parent_project = function(column) {
 		alert('Не в этот раз.')
 	}
 
-	function control_button_handler_parent_issue(column) {
+	control_buttons_handlers.parent_issue = function(column) {
 		alert('Не в этот раз.')
 	}
 
-	function control_button_handler_return(column) {
+	general_control_buttons_handlers.return = function() {
 		$('.selected').removeClass('selected')
 		$('.tree').slideDown()
 		$('.related_issues').slideUp()
-		control_buttons_enable_only('column', control_buttons.initial)
+		control_buttons_enable_only('column', 'initial')
 	}
 
-	function control_button_handler_deselect(column) {		
+	general_control_buttons_handlers.deselect = function() {		
 		$('.selected').removeClass('selected')
-		control_buttons_enable_only('column', control_buttons.related_issues)
+		control_buttons_enable_only('column', 'related_issues')
 		$('.related_issues li').each(function(){$(this).slideDown()})
 	}
 
-	function control_button_handler_related_by_number(column) {		
+	general_control_buttons_handlers.related_by_number = function() {		
 		var id = prompt("Номер задачи:");		
 		load_and_draw_related_issues(id)
 	}
 
-	$('.control-button').click(control_buttons_handler)
+	general_control_buttons_handlers.show_closed = function() {	
+		alert('Не в этот раз.')
+	}
 
 
 	/*
@@ -282,7 +312,7 @@ jQuery(function($){
 	 */
 
 	function load_object(src, dst) {
-		for (let i in src) dst[i] = src[i]
+		for (var i in src) dst[i] = src[i]
 	}
 
 	function open_url(type, id) {
@@ -293,18 +323,17 @@ jQuery(function($){
 	function draw_leaf(el, type) {
 		var name = params[type].name,
 			leaf, assigned_to, status
-		leaf = $('<li><div class="title">' + el[name] + '</div></li>')
+		leaf = $('<li><table class="wrapper"><tr><td class="title">' + 
+				 el[name] + '</td></tr></table></li>')
 			.data('id', el.id)
 			.data('type', type)
 		if (type === 'issue') {
 			assigned_to = el.firstname + ' ' + el.lastname
 			status = el.status_name
-			leaf.append('<td class="assigned">' + assigned_to + '</td>')
+			leaf.find('tr')
+				.append('<td class="assigned">' + assigned_to + '</td>')
 				.append('<td class="status">' + status + '</td>')
-		}
-		leaf.find('.title').wrapAll('<td>')				
-		leaf.find('td').wrapAll('<table class="wrapper">')
-					   .wrapAll('<tr>')
+		}		
 		return leaf
 	}
 
@@ -312,27 +341,47 @@ jQuery(function($){
 		return side === 'left' ? 'right' : 'left'
 	}
 
-	function control_buttons_enable_only(column, buttons) {
-		control_buttons_enable(column, 'all')
-		control_buttons_disable(column, buttons)
+	function control_buttons_enable_only(column, buttons_type) {
+		_control_buttons_enable_only(column, buttons_type, 'self')
+		if (column === 'general') return
+
+		_control_buttons_enable_only('general', buttons_type, 'general')
+		if (column === 'column') return
+
+		_control_buttons_enable_only(other_side(column), buttons_type, 'other')
 	}
 
-	function control_buttons_enable(column, buttons) {
-		var dom_buttons = $('.column.' + column + ' .control-button')
+	function _control_buttons_enable_only(column, buttons_type, src) {
+		var buttons = control_buttons[buttons_type][src]
 
-		dom_buttons.each(function() {
-			$(this).addClass('disabled')
-		})
+		if (buttons) {
+			control_buttons_disable(column, control_buttons.all[src])	
+			control_buttons_enable(column, buttons)		
+		}
 	}
 
-	function control_buttons_disable(column, buttons) {
-		var dom_buttons = $('.column.' + column + ' .control-button')
+	function control_buttons_switch(enable, column, buttons) {
+		var dom_buttons = (column === 'general') ? 
+			$('.general-control-button') : 
+			$('.column.' + column + ' .control-button')
 
 		dom_buttons.each(function() {
 			if (buttons.indexOf($(this).data('type')) >= 0) {
-				$(this).removeClass('disabled')
+				if (enable) {
+					$(this).removeClass('disabled')
+				} else {
+					$(this).addClass('disabled')
+				}
 			}
 		})
+	}
+
+	function control_buttons_enable(column, buttons) {
+		control_buttons_switch(true, column, buttons)
+	}
+
+	function control_buttons_disable(column, buttons) {
+		control_buttons_switch(false, column, buttons)
 	}
 
 })

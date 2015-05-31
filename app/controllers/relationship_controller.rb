@@ -6,14 +6,19 @@ class RelationshipController < ApplicationController
   end
 
   def projects
-  	@projects = Project.all(conditions: {status: 1}, 
-                            select: 'projects.id, projects.name, 
+  	@projects = Project.all(
+              conditions: {status: 1}, 
+              select: 'projects.id, projects.name, 
                                      projects.parent_id,
                                      (projects.rgt - projects.lft - 1 + 
-                                      COUNT(issues.id)) AS has_content',
-                            joins: 'LEFT JOIN "issues" ON issues.project_id = projects.id', 
-                            group: 'projects.id',
-                            order: 'projects.id')
+                                      COUNT(issues.id)) AS has_content, 
+                                     COUNT(t1.id) AS has_opened_content',
+              joins: 'LEFT JOIN issues ON issues.project_id = projects.id
+                      LEFT JOIN issue_statuses AS t1 ON t1.id = issues.status_id 
+                                                        AND NOT t1.is_closed', 
+              group: 'projects.id',
+              order: 'projects.id'
+    )
     result = {}
     @projects.each do | project |
       key = (project.parent_id!=nil) ? project.parent_id : 'null'
@@ -67,11 +72,20 @@ private
 
   def issue_select_params
     return {
-      select: 'issues.id, issues.parent_id, project_id, subject, status_id, 
-               users.firstname AS firstname, users.lastname AS lastname, 
-               issue_statuses.name AS status_name, issue_statuses.is_closed, 
-               (issues.rgt-issues.lft-1) as has_content', 
-      joins: [:assigned_to, :status, :project]
+      select: 'issues.id, issues.parent_id, issues.project_id, issues.subject, 
+               issues.status_id, users.firstname AS firstname, 
+               users.lastname AS lastname, issue_statuses.name AS status_name, 
+               issue_statuses.is_closed, 
+               (issues.rgt-issues.lft-1) as has_content, 
+               COUNT(t1.id) AS has_opened_content', 
+      joins: 'LEFT JOIN users ON issues.assigned_to_id = users.id
+              LEFT JOIN issue_statuses ON issues.status_id = issue_statuses.id
+              LEFT JOIN projects ON issues.project_id = projects.id
+              LEFT JOIN issues AS t ON issues.id = t.parent_id
+              LEFT JOIN issue_statuses AS t1 ON t1.id = t.status_id 
+                                                AND NOT t1.is_closed',
+      group: 'issues.id, firstname, lastname, status_name, 
+              issue_statuses.is_closed',
     }
   end
 

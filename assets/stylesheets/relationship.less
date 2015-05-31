@@ -72,6 +72,19 @@
 			}
 		}
 
+		&.hide_closed {
+			.closed {
+				display: none;
+			}
+
+			.has_no_opened_content {
+				.switcher {					
+					background: none;
+					cursor: default;
+				}
+			}
+		}
+
 		.tree {
 			width: 100%;
 			height: @tree_height;

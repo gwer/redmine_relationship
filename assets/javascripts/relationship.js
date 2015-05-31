@@ -182,6 +182,7 @@ jQuery(function($){
 		column.find('.selected').removeClass('selected')
 		li.addClass('selected')
 		if (!is_tree) {
+			column.find('li').slideDown()
 			other_column.find('.selected').removeClass('selected')
 			other_column.find('.related_issues li').each(function() {
 				if(relations[li.data('id')].indexOf($(this).data('id')) < 0) {
@@ -303,7 +304,18 @@ jQuery(function($){
 	}
 
 	general_control_buttons_handlers.show_closed = function() {	
-		alert('Не в этот раз.')
+		if (state.closed === 'unlock') {
+			state.closed = 'lock'
+			$('[data-type=show_closed] .fa').removeClass('fa-unlock')
+											.addClass('fa-lock')
+			$('.column').addClass('hide_closed')
+			
+			return
+		}
+		state.closed = 'unlock'		
+		$('[data-type=show_closed] .fa').addClass('fa-unlock')
+										.removeClass('fa-lock')
+		$('.column').removeClass('hide_closed')
 	}
 
 
@@ -327,13 +339,20 @@ jQuery(function($){
 				 el[name] + '</td></tr></table></li>')
 			.data('id', el.id)
 			.data('type', type)
+		if (!parseInt(el.has_opened_content)) {
+			leaf.addClass('has_no_opened_content')
+		}	
 		if (type === 'issue') {
 			assigned_to = el.firstname + ' ' + el.lastname
 			status = el.status_name
 			leaf.find('tr')
 				.append('<td class="assigned">' + assigned_to + '</td>')
 				.append('<td class="status">' + status + '</td>')
-		}		
+				.find('.title').prepend('#' + el.id + ': ')
+			if (el.is_closed === 't') {
+				leaf.addClass('closed')
+			}
+		}	
 		return leaf
 	}
 

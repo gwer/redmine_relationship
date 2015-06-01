@@ -71,10 +71,16 @@ jQuery(function($){
 	}
 
 	(function init() {
+		var init_issue
+
 		$.get('/relationship/projects', function(data) {
 			load_object(data, projects)
 			load_and_draw_branch('project', null, $('.column .tree'))
 			control_buttons_enable_only('column', 'initial')
+
+			if (init_issue = window.location.hash.slice(1)) {
+				load_and_draw_related_issues(init_issue)
+			}
 		})
 
 		$.get('/relationship/api_key', function(data) {

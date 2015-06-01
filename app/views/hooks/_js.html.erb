@@ -1,3 +1,4 @@
-  <% if controller_name == 'issues' && action_name == 'show' %>
-    <%= javascript_include_tag 'issue_show', plugin: 'redmine_relationship' %>
-  <% end %>
+  <% if controller_name == 'issues' && (action_name == 'show' || action_name == 'index') %>
+	<%= stylesheet_link_tag "font-awesome-4.3.0/css/font-awesome.min.css", plugin: "redmine_relationship" %>
+    <%= javascript_include_tag 'issue_' + action_name, plugin: 'redmine_relationship' %>
+  <% end %>  

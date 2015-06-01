@@ -1,3 +1,4 @@
 # English strings go here for Rails i18n
 en:
-  issues_control: "Issues control"
+  issues_control: 'Issues control'
+  relationship_caption: 'Relationship'

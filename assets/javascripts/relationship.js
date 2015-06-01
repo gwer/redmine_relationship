@@ -59,6 +59,7 @@ jQuery(function($){
 		general_control_buttons_handlers = {},
 		state = {
 			closed: 'unlock',
+			api_key: '',
 		}
 
 	function init_params(objects, name, plural) {
@@ -70,10 +71,14 @@ jQuery(function($){
 	}
 
 	(function init() {
-		$.get('/relationship/projects', function(data){
+		$.get('/relationship/projects', function(data) {
 			load_object(data, projects)
 			load_and_draw_branch('project', null, $('.column .tree'))
 			control_buttons_enable_only('column', 'initial')
+		})
+
+		$.get('/relationship/api_key', function(data) {
+			state.api_key = data
 		})
 
 		$('.column')
@@ -91,9 +96,7 @@ jQuery(function($){
 
 	function load_and_draw_branch(type, id, base) {
 		var object = params[type].objects[id],
-			switcher = base.children('.switcher'),
-			type_plural = params[type].plural,
-			url = 'relationship/' + type_plural + '/' + id + '/children'
+			switcher = base.children('.switcher')
 
 		if (object.loaded || id === null) {
 			draw_branch(type, id, base)
@@ -101,11 +104,21 @@ jQuery(function($){
 		}
 
 		switcher.toggleClass('loading hidden')
+		load_branch(type, id, function() {
+			draw_branch(type, id, base)
+			switcher.toggleClass('loading hidden')			
+		})
+	}
+
+	function load_branch(type, id, callback) {
+		var object = params[type].objects[id],
+			type_plural = params[type].plural,
+			url = 'relationship/' + type_plural + '/' + id + '/children'
+			
 		$.get(url, function(data){
 			object.issues = data
 			object.loaded = true
-			draw_branch(type, id, base)
-			switcher.toggleClass('loading hidden')
+			if (callback) callback()
 		})
 	}
 
@@ -114,7 +127,7 @@ jQuery(function($){
 		base.append(draw_branch_part(type, 'project', id, base))
 		base.append('<ul class="separator" style="display: none;">')
 		base.append(draw_branch_part(type, 'issue', id, base))
-		base.data('drawn', true)
+		base.attr('data-drawn', true)
 		base.children('ul').slideToggle()
 		base.toggleClass('open')
 	}
@@ -282,7 +295,83 @@ jQuery(function($){
 	}
 
 	control_buttons_handlers.parent_issue = function(column) {
-		alert('Не в этот раз.')
+		var changed_id = selected[column].id,
+			changed_li = $('.' + column).find(li_selector('issue', changed_id)),
+			parent_li = changed_li.parent().closest('li')[0],
+			parent_ds = parent_li.dataset,
+			parent_id = (parent_ds.type === 'issue') ? parent_ds.id : 'root',
+			msg = 'Номер родительского тикета (root — чтобы сделать корневым):',
+			new_parent = prompt(msg, parent_id),
+			csrf_meta_tag = $('meta[name=csrf-token]')[0],
+			token = ''
+
+		if (!new_parent || new_parent === parent_id) return
+
+		if (new_parent === 'root') new_parent = null
+
+		if (csrf_meta_tag) {
+			token = csrf_meta_tag.content
+		}
+
+		$.ajax({
+			url: '/issues/' + changed_id + '.json',
+			dataType: 'text',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				issue: {
+					parent_issue_id: new_parent
+				},
+				key: state.api_key,
+			}),
+			type: 'PUT',
+			headers: {'X-CSRF-Token': token},
+			success: success_handler,
+			error: function(data) {
+				alert(JSON.parse(data.responseText).errors.join('\n'))
+			}
+		})
+
+		function success_handler(data) {
+			var project = changed_li.closest('li[data-type=project]')[0],
+				lis, ds
+
+			lis = $(li_selector(parent_ds.type, parent_ds.id))
+			ds = lis[0].dataset
+			load_branch(parent_ds.type, parent_ds.id, function() {
+				lis.each(function(_, el) {
+					ds = el.dataset
+			  		if (ds.drawn) {
+						load_and_draw_branch(ds.type, ds.id, $(el))
+					}
+				})
+
+				if (new_parent === null) {
+					ds = project.dataset
+					lis = $(li_selector(ds.type, ds.id))
+				} else {
+					lis = $(li_selector('issue', new_parent))
+					if (!params.issue.objects[new_parent]) return
+
+					ds = (!!lis.length) ? lis[0].dataset : {
+						type: 'issue', 
+						id: new_parent
+					} 
+				}
+
+				load_branch(ds.type, ds.id, function() {
+					lis.each(function(_, el) {
+						ds = el.dataset
+				  		if (ds.drawn) {
+							load_and_draw_branch(ds.type, ds.id, $(el))
+						}
+					})
+				})
+			})
+		}
+
+		function li_selector(type, id) {
+			return 'li[data-type=' + type + '][data-id=' + id + ']'
+		}
 	}
 
 	general_control_buttons_handlers.return = function() {
@@ -299,7 +388,7 @@ jQuery(function($){
 	}
 
 	general_control_buttons_handlers.related_by_number = function() {		
-		var id = prompt("Номер задачи:");		
+		var id = prompt("Номер задачи:")		
 		load_and_draw_related_issues(id)
 	}
 
@@ -337,8 +426,8 @@ jQuery(function($){
 			leaf, assigned_to, status
 		leaf = $('<li><table class="wrapper"><tr><td class="title">' + 
 				 el[name] + '</td></tr></table></li>')
-			.data('id', el.id)
-			.data('type', type)
+			.attr('data-id', el.id)
+			.attr('data-type', type)
 		if (!parseInt(el.has_opened_content)) {
 			leaf.addClass('has_no_opened_content')
 		}	

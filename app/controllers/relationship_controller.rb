@@ -37,6 +37,7 @@ class RelationshipController < ApplicationController
 
   def projects_children
   	@issues = Issue.all({conditions: {project_id: params[:id], 
+                                      parent_id: nil, 
                                       projects: {status: 1}}}.merge(
                                                           issue_select_params))
     render json: @issues
@@ -68,6 +69,10 @@ class RelationshipController < ApplicationController
     }
   end
 
+  def user_api_key
+    render inline: User.current.api_key
+  end
+
 private
 
   def issue_select_params
@@ -86,6 +91,7 @@ private
                                                 AND NOT t1.is_closed',
       group: 'issues.id, firstname, lastname, status_name, 
               issue_statuses.is_closed',
+      order: 'issues.id DESC'
     }
   end
 

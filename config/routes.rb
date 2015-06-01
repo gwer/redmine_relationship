@@ -9,4 +9,6 @@ ActionController::Routing::Routes.draw do |map|
 		:conditions => {:method => :get})
 	map.connect('relationship/issues/:id/relative',  :controller => 'relationship', :action => 'issues_relative',
 		:conditions => {:method => :get})
+	map.connect('relationship/api_key',  :controller => 'relationship', :action => 'user_api_key',
+		:conditions => {:method => :get})
 end

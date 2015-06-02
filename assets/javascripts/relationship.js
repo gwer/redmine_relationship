@@ -60,6 +60,10 @@ jQuery(function($){
 		state = {
 			closed: 'unlock',
 			api_key: '',
+			trees: {
+				left: {},
+				right: {}
+			}
 		}
 
 	function init_params(objects, name, plural) {
@@ -75,8 +79,10 @@ jQuery(function($){
 
 		$.get('/relationship/projects', function(data) {
 			load_object(data, projects)
-			load_and_draw_branch('project', null, $('.column .tree'))
+			load_and_draw_branch('project', null, $('.column .tree'), true)
 			control_buttons_enable_only('column', 'initial')
+
+			restore_trees()
 
 			if (init_issue = window.location.hash.slice(1)) {
 				load_and_draw_related_issues(init_issue)
@@ -100,19 +106,29 @@ jQuery(function($){
 	 *	Loading and drawing projects-issues tree
 	 */
 
-	function load_and_draw_branch(type, id, base) {
+	function load_and_draw_branch(type, id, base, not_save_tree, callback) {
 		var object = params[type].objects[id],
 			switcher = base.children('.switcher')
 
+		if (!(id in params[type].objects)) {
+			object = params[type].objects[id] = {
+				projects: [],
+				issues: [],
+				loaded: false
+			}
+		}
+
 		if (object.loaded || id === null) {
-			draw_branch(type, id, base)
+			draw_branch(type, id, base, not_save_tree)
+			if (callback) callback()
 			return
 		}
 
 		switcher.toggleClass('loading hidden')
 		load_branch(type, id, function() {
-			draw_branch(type, id, base)
-			switcher.toggleClass('loading hidden')			
+			draw_branch(type, id, base, not_save_tree)
+			switcher.toggleClass('loading hidden')	
+			if (callback) callback()	
 		})
 	}
 
@@ -128,7 +144,7 @@ jQuery(function($){
 		})
 	}
 
-	function draw_branch(type, id, base) {
+	function draw_branch(type, id, base, not_save_tree) {
 		base.children('ul').remove()
 		base.append(draw_branch_part(type, 'project', id, base))
 		base.append('<ul class="separator" style="display: none;">')
@@ -136,6 +152,7 @@ jQuery(function($){
 		base.attr('data-drawn', true)
 		base.children('ul').slideToggle()
 		base.toggleClass('open')
+		if (!not_save_tree) save_tree(base.closest('.tree'))
 	}
 
 	function draw_branch_part(parent_type, node_type, id, base) {
@@ -166,22 +183,66 @@ jQuery(function($){
 
 		if ($(this).hasClass('loading') || $(this).hasClass('hidden')) return
 
-		if (!(id in params[type].objects)) {
-			params[type].objects[id] = {
-				projects: [],
-				issues: [],
-				loaded: false
-			}
-		}
-		object = params[type].objects[id]
-		if (!object.loaded || !base.data('drawn')) {
+		if (!(id in params[type].objects) 
+			|| !params[type].objects[id].loaded 
+			|| !base.data('drawn')) {
 			load_and_draw_branch(type, id, base)
 			return false // hereinafter to prevent bubbling
 		}			
 
 		base.children('ul').stop(true).slideToggle()
 		base.toggleClass('open')
+		save_tree(base.closest('.tree'))
 		return false
+	}
+
+
+	/*
+	 *	Save and restore of trees
+	 */
+
+	function save_tree(base) {
+		var column = base.closest('.column').data('side')
+
+		state.trees[column] = get_tree(base)
+		setCookie('trees_state', JSON.stringify(state.trees), 
+				  {expires: 60*60*24*30})
+	}
+
+	function get_tree(base) {
+		var state = {
+			projects: {},
+			issues: {}
+		}
+
+		base.children('.projects').children('li.open').each(function(_, el) {
+			state.projects[$(el).data('id')] = get_tree($(el))
+		})
+		base.children('.issues').children('li.open').each(function(_, el) {
+			state.issues[$(el).data('id')] = get_tree($(el))
+		})
+		return state
+	}
+
+	function restore_trees() {
+		state.trees = JSON.parse(getCookie('trees_state'))
+		expand_tree('left', state.trees.left)
+		expand_tree('right', state.trees.right)
+	}
+
+	function expand_tree(column, state) {
+		expand_branch_type(column, 'project', state.projects)
+		expand_branch_type(column, 'issue', state.issues)
+	}
+
+	function expand_branch_type(column, type, state) {
+		var base
+
+		for (var id in state) {
+			base = $('.' + column + ' ' + li_selector(type, id))
+			load_and_draw_branch(type, id, base, true, 
+								 expand_tree.bind(null, column, state[id]))
+		}
 	}
 
 
@@ -374,10 +435,6 @@ jQuery(function($){
 				})
 			})
 		}
-
-		function li_selector(type, id) {
-			return 'li[data-type=' + type + '][data-id=' + id + ']'
-		}
 	}
 
 	general_control_buttons_handlers.return = function() {
@@ -411,6 +468,50 @@ jQuery(function($){
 		$('[data-type=show_closed] .fa').addClass('fa-unlock')
 										.removeClass('fa-lock')
 		$('.column').removeClass('hide_closed')
+	}
+
+
+	function control_buttons_enable_only(column, buttons_type) {
+		_control_buttons_enable_only(column, buttons_type, 'self')
+		if (column === 'general') return
+
+		_control_buttons_enable_only('general', buttons_type, 'general')
+		if (column === 'column') return
+
+		_control_buttons_enable_only(other_side(column), buttons_type, 'other')
+	}
+
+	function _control_buttons_enable_only(column, buttons_type, src) {
+		var buttons = control_buttons[buttons_type][src]
+
+		if (buttons) {
+			control_buttons_disable(column, control_buttons.all[src])	
+			control_buttons_enable(column, buttons)		
+		}
+	}
+
+	function control_buttons_switch(enable, column, buttons) {
+		var dom_buttons = (column === 'general') ? 
+			$('.general-control-button') : 
+			$('.column.' + column + ' .control-button')
+
+		dom_buttons.each(function() {
+			if (buttons.indexOf($(this).data('type')) >= 0) {
+				if (enable) {
+					$(this).removeClass('disabled')
+				} else {
+					$(this).addClass('disabled')
+				}
+			}
+		})
+	}
+
+	function control_buttons_enable(column, buttons) {
+		control_buttons_switch(true, column, buttons)
+	}
+
+	function control_buttons_disable(column, buttons) {
+		control_buttons_switch(false, column, buttons)
 	}
 
 
@@ -455,47 +556,51 @@ jQuery(function($){
 		return side === 'left' ? 'right' : 'left'
 	}
 
-	function control_buttons_enable_only(column, buttons_type) {
-		_control_buttons_enable_only(column, buttons_type, 'self')
-		if (column === 'general') return
-
-		_control_buttons_enable_only('general', buttons_type, 'general')
-		if (column === 'column') return
-
-		_control_buttons_enable_only(other_side(column), buttons_type, 'other')
+	function li_selector(type, id) {
+		return 'li[data-type=' + type + '][data-id=' + id + ']'
 	}
 
-	function _control_buttons_enable_only(column, buttons_type, src) {
-		var buttons = control_buttons[buttons_type][src]
 
-		if (buttons) {
-			control_buttons_disable(column, control_buttons.all[src])	
-			control_buttons_enable(column, buttons)		
+	/*
+	 *	Cookies (from https://learn.javascript.ru/cookie)
+	 */
+
+	function getCookie(name) {
+		var matches = document.cookie.match(new RegExp(
+			"(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, 
+			'\\$1') + "=([^;]*)"
+		));
+
+		return matches ? decodeURIComponent(matches[1]) : undefined;
+	}
+
+	function setCookie(name, value, options) {
+		options = options || {};
+
+		var expires = options.expires;
+
+		if (typeof expires == "number" && expires) {
+			var d = new Date();
+			d.setTime(d.getTime() + expires * 1000);
+			expires = options.expires = d;
 		}
-	}
+		if (expires && expires.toUTCString) {
+			options.expires = expires.toUTCString();
+		}
 
-	function control_buttons_switch(enable, column, buttons) {
-		var dom_buttons = (column === 'general') ? 
-			$('.general-control-button') : 
-			$('.column.' + column + ' .control-button')
+		value = encodeURIComponent(value);
 
-		dom_buttons.each(function() {
-			if (buttons.indexOf($(this).data('type')) >= 0) {
-				if (enable) {
-					$(this).removeClass('disabled')
-				} else {
-					$(this).addClass('disabled')
-				}
+		var updatedCookie = name + "=" + value;
+
+		for (var propName in options) {
+			updatedCookie += "; " + propName;
+			var propValue = options[propName];
+			if (propValue !== true) {
+				updatedCookie += "=" + propValue;
 			}
-		})
-	}
+		}
 
-	function control_buttons_enable(column, buttons) {
-		control_buttons_switch(true, column, buttons)
-	}
-
-	function control_buttons_disable(column, buttons) {
-		control_buttons_switch(false, column, buttons)
+		document.cookie = updatedCookie;
 	}
 
 })

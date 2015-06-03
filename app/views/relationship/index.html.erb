@@ -49,6 +49,20 @@
 				<div class="description">Выбрать</div>
 			</div>-->
 
+			<div class="settings button">
+				<i class="fa fa-gear"></i>
+				<!--<div class="description">Настройки</div>-->
+			</div>
+			<div class="settings content" data-hideable>
+				<div class="param assigned">
+					Присвоено: <%= select_tag(:user_left, options_for_select([['', 'all']] + @users.map {|u| [u.name, u.id]})) %>
+				</div>
+				<div class="param date_range">
+					Обновлено:
+					<input type="date" class="date" data-type="begin"> — <input type="date" class="date" data-type="end">
+				</div>
+			</div>		
+
 			<div class="title"></div>
 		</div>
 		<div class="tree"></div>
@@ -76,6 +90,20 @@
 				<i class="fa fa-check"></i>
 				<div class="description">Выбрать</div>
 			</div>-->
+
+			<div class="settings button">
+				<i class="fa fa-gear"></i>
+				<!--<div class="description">Настройки</div>-->
+			</div>
+			<div class="settings content" data-hideable>
+				<div class="param assigned">
+					Присвоено: <%= select_tag(:user_left, options_for_select([['', 'all']] + @users.map {|u| [u.name, u.id]})) %>
+				</div>
+				<div class="param date_range">
+					Обновлено:
+					<input type="date" class="date" data-type="begin"> — <input type="date" class="date" data-type="end">
+				</div>
+			</div>
 
 			<div class="title"></div>
 		</div>

@@ -64,6 +64,22 @@ jQuery(function($){
 				left: {},
 				right: {}
 			}
+		},
+		settings = {
+			left: {
+				assigned: 'all',
+				updated_on: {
+					begin: '',
+					end: ''
+				}
+			},
+			right: {
+				assigned: 'all',
+				updated_on: {
+					begin: NaN,
+					end: NaN
+				}
+			},
 		}
 
 	function init_params(objects, name, plural) {
@@ -99,6 +115,12 @@ jQuery(function($){
 
 		$('.control-button').click(control_buttons_handler)
 		$('.general-control-button').click(general_control_buttons_handler)
+
+		$('[name="user_left"], [name="user_right"]').change(user_select_handler)
+
+		$('.settings.button').click(settings_button_handler)
+
+		$('.param.date_range input.date').change(updated_date_handler)
 	})()
 
 
@@ -159,6 +181,7 @@ jQuery(function($){
 		var node_type_plural = params[node_type].plural,
 			branch = $('<ul class="' + node_type_plural + '">'),
 			_switcher = $('<div class="switcher">'),
+			side = base.closest('.column').data('side'),
 			object, switcher, leaf
 
 		branch.css('display', 'none')
@@ -166,6 +189,15 @@ jQuery(function($){
 			switcher = _switcher.clone()
 			leaf = draw_leaf(el, node_type)
 					.prepend(switcher)
+			if (node_type === 'issue') {
+				if (settings[side].assigned != 'all'
+					&& settings[side].assigned != leaf.data('assigned')) {
+					leaf.addClass('hide_by_assigned')
+				}
+				if (is_hidden_by_updated_date(leaf, side)) {
+					leaf.addClass('hide_by_updated_on')
+				}
+			}
 			if (!parseInt(el.has_content)) {
 				switcher.addClass('hidden')
 			} 
@@ -225,7 +257,10 @@ jQuery(function($){
 	}
 
 	function restore_trees() {
-		state.trees = JSON.parse(getCookie('trees_state'))
+		var trees_state = getCookie('trees_state')
+		if (trees_state) {
+			state.trees = JSON.parse(getCookie('trees_state'))
+		}
 		expand_tree('left', state.trees.left)
 		expand_tree('right', state.trees.right)
 	}
@@ -470,6 +505,9 @@ jQuery(function($){
 		$('.column').removeClass('hide_closed')
 	}
 
+	function settings_button_handler() {
+		$(this).siblings('.settings.content').slideToggle()
+	}
 
 	function control_buttons_enable_only(column, buttons_type) {
 		_control_buttons_enable_only(column, buttons_type, 'self')
@@ -516,6 +554,52 @@ jQuery(function($){
 
 
 	/*
+	 *	Filter Handlers
+	 */
+
+	function user_select_handler() {
+		var side = $(this).closest('.column').data('side'),
+			id = $(this).val()
+
+		if (settings[side].assigned === id) return
+
+		settings[side].assigned = id
+
+		$('.column.' + side + ' li[data-type="issue"].hide_by_assigned')
+			.removeClass('hide_by_assigned')
+		if (id === 'all') return
+			
+		$('.column.' + side + ' li[data-type="issue"]' + 
+		  ':not([data-assigned="' + id + '"])').addClass('hide_by_assigned')
+	}
+
+	function updated_date_handler() {
+		var side = $(this).closest('.column').data('side'),
+			type = $(this).data('type')
+
+		settings[side].updated_on[type] = Date.parse($(this).val())
+
+		$('.column.' + side + ' li[data-type="issue"].hide_by_updated_on')
+			.removeClass('hide_by_updated_on')			
+		$('.column.' + side + ' li[data-type="issue"]').each(function() {
+			if (is_hidden_by_updated_date($(this))) {
+				$(this).addClass('hide_by_updated_on')
+			}
+		})
+	}
+
+	// TODO: to solve the problem with time zone
+	function is_hidden_by_updated_date(li, column) {
+		var date = li.data('updated_on'),
+			side = column || li.closest('.column').data('side'),
+			begin = settings[side].updated_on.begin - 1000*60*60*3,
+			end = settings[side].updated_on.end + 1000*60*60*21
+
+		return !((date > begin || !begin) && (date < end || !end))
+	}
+
+
+	/*
 	 *	Helpers
 	 */
 
@@ -545,6 +629,9 @@ jQuery(function($){
 				.append('<td class="assigned">' + assigned_to + '</td>')
 				.append('<td class="status">' + status + '</td>')
 				.find('.title').prepend('#' + el.id + ': ')
+			leaf
+				.attr('data-assigned', el.user_id)
+				.attr('data-updated_on', Date.parse(el.updated_on))
 			if (el.is_closed === 't') {
 				leaf.addClass('closed')
 			}

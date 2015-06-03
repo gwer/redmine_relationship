@@ -3,6 +3,7 @@ class RelationshipController < ApplicationController
 
 
   def index
+    @users = User.all conditions: {status: 1}
   end
 
   def projects
@@ -36,10 +37,13 @@ class RelationshipController < ApplicationController
   end
 
   def projects_children
-  	@issues = Issue.all({conditions: {project_id: params[:id], 
+  	@issues = (Issue.all({conditions: {project_id: params[:id], 
                                       parent_id: nil, 
                                       projects: {status: 1}}}.merge(
-                                                          issue_select_params))
+                                                    issue_select_params)) +
+               Issue.all({conditions: {project_id: params[:id], 
+                                      projects: {status: 1}}}.merge(
+                                                    issue_select_params))).uniq
     render json: @issues
   end
 
@@ -78,7 +82,8 @@ private
   def issue_select_params
     return {
       select: 'issues.id, issues.parent_id, issues.project_id, issues.subject, 
-               issues.status_id, users.firstname AS firstname, 
+               issues.status_id, issues.updated_on, 
+               users.firstname AS firstname, users.id AS user_id, 
                users.lastname AS lastname, issue_statuses.name AS status_name, 
                issue_statuses.is_closed, 
                (issues.rgt-issues.lft-1) as has_content, 
@@ -89,8 +94,7 @@ private
               LEFT JOIN issues AS t ON issues.id = t.parent_id
               LEFT JOIN issue_statuses AS t1 ON t1.id = t.status_id 
                                                 AND NOT t1.is_closed',
-      group: 'issues.id, firstname, lastname, status_name, 
-              issue_statuses.is_closed',
+      group: 'issues.id, user_id, status_name, issue_statuses.is_closed',
       order: 'issues.id DESC'
     }
   end

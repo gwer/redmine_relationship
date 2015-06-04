@@ -69,8 +69,8 @@ jQuery(function($){
 			left: {
 				assigned: 'all',
 				updated_on: {
-					begin: '',
-					end: ''
+					begin: NaN,
+					end: NaN
 				}
 			},
 			right: {
@@ -297,13 +297,13 @@ jQuery(function($){
 		column.find('.selected').removeClass('selected')
 		li.addClass('selected')
 		if (!is_tree) {
-			column.find('li').slideDown()
+			column.find('li').show()
 			other_column.find('.selected').removeClass('selected')
 			other_column.find('.related_issues li').each(function() {
 				if(relations[li.data('id')].indexOf($(this).data('id')) < 0) {
-					$(this).slideUp()
+					$(this).hide()
 				} else {
-					$(this).slideDown()
+					$(this).show()
 				}
 			})
 			control_buttons_enable_only(other_side(side), 
@@ -312,6 +312,12 @@ jQuery(function($){
 								'related_issues_selected')
 		} else {			
 			control_buttons_enable_only(side, li.data('type'))
+			if (selected.left.type === 'issue' 
+				&& selected.right.type === 'issue') {
+				control_buttons_enable('general', 'add_relation')
+			} else {
+				control_buttons_disable('general', 'add_relation')
+			}
 		}
 		return false
 	}
@@ -399,21 +405,15 @@ jQuery(function($){
 	control_buttons_handlers.parent_issue = function(column) {
 		var changed_id = selected[column].id,
 			changed_li = $('.' + column).find(li_selector('issue', changed_id)),
-			parent_li = changed_li.parent().closest('li')[0],
+			parent_li = $(changed_li[0]).parent().closest('li')[0],
 			parent_ds = parent_li.dataset,
 			parent_id = (parent_ds.type === 'issue') ? parent_ds.id : 'root',
 			msg = 'Номер родительского тикета (root — чтобы сделать корневым):',
-			new_parent = prompt(msg, parent_id),
-			csrf_meta_tag = $('meta[name=csrf-token]')[0],
-			token = ''
+			new_parent = prompt(msg, parent_id)
 
 		if (!new_parent || new_parent === parent_id) return
 
 		if (new_parent === 'root') new_parent = null
-
-		if (csrf_meta_tag) {
-			token = csrf_meta_tag.content
-		}
 
 		$.ajax({
 			url: '/issues/' + changed_id + '.json',
@@ -426,7 +426,7 @@ jQuery(function($){
 				key: state.api_key,
 			}),
 			type: 'PUT',
-			headers: {'X-CSRF-Token': token},
+			headers: {'X-CSRF-Token': getToken()},
 			success: success_handler,
 			error: function(data) {
 				alert(JSON.parse(data.responseText).errors.join('\n'))
@@ -505,6 +505,36 @@ jQuery(function($){
 		$('.column').removeClass('hide_closed')
 	}
 
+	general_control_buttons_handlers.add_relation = function() {	
+		var left = selected.left.id,
+			right = selected.right.id
+
+		if (selected.left.type !== 'issue' || selected.right.type !== 'issue') 
+			return
+
+		$.ajax({
+			url: '/issues/' + left + '/relations.json',
+			dataType: 'text',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				relation: {
+					issue_to_id: right,
+					relation_type: 'relates'
+				},
+				key: state.api_key,
+			}),
+			type: 'POST',
+			headers: {'X-CSRF-Token': getToken()},
+			success: function(data) {
+				control_buttons_disable('general', 'add_relation')
+			},
+			error: function(data) {
+				console.log(data)
+				alert(JSON.parse(data.responseText).errors.join('\n'))
+			}
+		})
+	}
+
 	function settings_button_handler() {
 		$(this).siblings('.settings.content').slideToggle()
 	}
@@ -530,8 +560,8 @@ jQuery(function($){
 
 	function control_buttons_switch(enable, column, buttons) {
 		var dom_buttons = (column === 'general') ? 
-			$('.general-control-button') : 
-			$('.column.' + column + ' .control-button')
+				$('.general-control-button') : 
+				$('.column.' + column + ' .control-button')
 
 		dom_buttons.each(function() {
 			if (buttons.indexOf($(this).data('type')) >= 0) {
@@ -645,6 +675,12 @@ jQuery(function($){
 
 	function li_selector(type, id) {
 		return 'li[data-type=' + type + '][data-id=' + id + ']'
+	}
+
+	function getToken() {
+		var csrf_meta_tag = $('meta[name=csrf-token]')[0]
+		
+		return csrf_meta_tag ? csrf_meta_tag.content : ''
 	}
 
 

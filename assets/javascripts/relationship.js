@@ -599,7 +599,7 @@ jQuery(function($){
 			.removeClass('hide_by_assigned')
 		if (id === 'all') return
 			
-		$('.column.' + side + ' li[data-type="issue"]' + 
+		$('.column.' + side + ' .tree li[data-type="issue"]' + 
 		  ':not([data-assigned="' + id + '"])').addClass('hide_by_assigned')
 	}
 
@@ -609,7 +609,7 @@ jQuery(function($){
 
 		settings[side].updated_on[type] = Date.parse($(this).val())
 
-		$('.column.' + side + ' li[data-type="issue"].hide_by_updated_on')
+		$('.column.' + side + ' .tree li[data-type="issue"].hide_by_updated_on')
 			.removeClass('hide_by_updated_on')			
 		$('.column.' + side + ' li[data-type="issue"]').each(function() {
 			if (is_hidden_by_updated_date($(this))) {
